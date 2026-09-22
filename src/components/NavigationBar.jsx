@@ -13,11 +13,13 @@ export function NavigationBar({
   isOfflineReady,
   is3DMode,
   onToggle3DMode,
-  onOpenGuideModal
+  onOpenGuideModal,
+  isNerdMode,
+  onToggleNerdMode
 }) {
   return (
     <>
-      {/* Top Right Bar: 3D Toggle, Guide, Offline, Language Switcher */}
+      {/* Top Right Bar: 3D Toggle, Guide, Nerd Stats, Offline, Language Switcher */}
       <div className="absolute top-20 sm:top-6 right-6 z-30 flex items-center gap-1.5 bg-white/95 backdrop-blur-sm p-1 rounded-xl shadow-md border border-gray-100">
         {/* 3D Vis Toggle Button */}
         <button
@@ -30,6 +32,19 @@ export function NavigationBar({
           title="Bật/Tắt chế độ Trực quan 3D (3D Vis)"
         >
           <span className="text-[13px] font-extrabold">{is3DMode ? '3D' : '2D'}</span>
+        </button>
+
+        {/* Nerd / Debug Mode Button */}
+        <button
+          onClick={onToggleNerdMode}
+          className={`flex items-center justify-center px-2 py-1.5 rounded-lg text-xs font-mono font-bold transition cursor-pointer ${
+            isNerdMode
+              ? 'bg-emerald-600 text-white shadow-sm'
+              : 'bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-200'
+          }`}
+          title="Nerd Mode / Debug Stats (Tọa độ, tốc độ, độ cao, FPS)"
+        >
+          &gt;_
         </button>
 
         {/* Guide / Hướng dẫn Button */}

@@ -10,6 +10,7 @@ import { RoomModal } from './components/RoomModal';
 import { FeedbackModal } from './components/FeedbackModal';
 import OfflineModal from './components/OfflineModal';
 import GuideModal from './components/GuideModal';
+import NerdOverlay from './components/NerdOverlay';
 import { checkOfflineStatus } from './services/offlineManager';
 
 const API_BASE = '/api/v1';
@@ -28,6 +29,10 @@ export default function App() {
   // 3D Visualization & Guide state
   const [is3DMode, setIs3DMode] = useState(false);
   const [guideModalOpen, setGuideModalOpen] = useState(false);
+
+  // Nerd / Debug Mode state
+  const [isNerdMode, setIsNerdMode] = useState(false);
+  const [gpsRawData, setGpsRawData] = useState(null);
 
   // Selected feature modal data
   const [selectedFeature, setSelectedFeature] = useState(null); // { type, data }
@@ -355,6 +360,19 @@ export default function App() {
           const lng = pos.coords.longitude;
           const lat = pos.coords.latitude;
           userLocationRef.current = [lng, lat];
+
+          // Store raw GPS metrics for Nerd Mode
+          setGpsRawData({
+            lng,
+            lat,
+            speed: pos.coords.speed,
+            altitude: pos.coords.altitude,
+            altitudeAccuracy: pos.coords.altitudeAccuracy,
+            accuracy: pos.coords.accuracy,
+            heading: pos.coords.heading,
+            timestamp: pos.timestamp
+          });
+
           if (userMarkerRef.current) {
             userMarkerRef.current.setLngLat([lng, lat]);
           } else {
@@ -763,6 +781,8 @@ export default function App() {
         is3DMode={is3DMode}
         onToggle3DMode={handleToggle3DMode}
         onOpenGuideModal={() => setGuideModalOpen(true)}
+        isNerdMode={isNerdMode}
+        onToggleNerdMode={() => setIsNerdMode(!isNerdMode)}
       />
 
       {/* Building / Facility Popup */}
@@ -921,6 +941,14 @@ export default function App() {
       <GuideModal
         isOpen={guideModalOpen}
         onClose={() => setGuideModalOpen(false)}
+      />
+
+      {/* Nerd / Debug Stats Overlay */}
+      <NerdOverlay
+        isOpen={isNerdMode}
+        onClose={() => setIsNerdMode(false)}
+        map={mapInstanceRef.current}
+        gpsData={gpsRawData}
       />
 
       {/* Initial Map Loading Splash */}
