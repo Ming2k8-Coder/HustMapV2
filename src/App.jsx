@@ -86,6 +86,17 @@ export default function App() {
   const gpsWatchIdRef = useRef(null);
   const recordedTrackRef = useRef([]);
 
+  // POI & Room Contribution state
+  const [poiData, setPoiData] = useState({
+    category: 'room',
+    buildingId: '',
+    floorNum: '',
+    code: '',
+    name: '',
+    coords: null // [lng, lat]
+  });
+  const poiMarkerRef = useRef(null);
+
   const mapContainerRef = useRef(null);
   const mapInstanceRef = useRef(null);
   const userMarkerRef = useRef(null);
@@ -550,6 +561,34 @@ export default function App() {
     }
   };
 
+  // Pick POI / Room location on map
+  const handlePickPoiLocation = () => {
+    setIsSelectingPoint('poi');
+    setFeedbackOpen(false); // Tạm ẩn form để người dùng thấy rõ bản đồ
+    const map = mapInstanceRef.current;
+    if (map) {
+      map._selectingPointMode = 'poi';
+      map._onPickPointCallback = (pickedMode, coords) => {
+        setPoiData((prev) => ({
+          ...prev,
+          coords: [coords[0], coords[1]]
+        }));
+
+        if (poiMarkerRef.current) {
+          poiMarkerRef.current.setLngLat([coords[0], coords[1]]);
+        } else {
+          poiMarkerRef.current = new maplibregl.Marker({ color: '#701818' })
+            .setLngLat([coords[0], coords[1]])
+            .addTo(map);
+        }
+
+        setIsSelectingPoint(null);
+        map._selectingPointMode = null;
+        setFeedbackOpen(true); // Mở lại form sau khi đã chấm xong vị trí
+      };
+    }
+  };
+
   // Toggle 3D / 2D Visualization Mode
   const handleToggle3DMode = () => {
     const map = mapInstanceRef.current;
@@ -710,8 +749,8 @@ export default function App() {
 
   // Send Feedback / Submit Contribution
   const handleSendFeedback = async () => {
-    if (!feedbackDesc.trim()) {
-      setFeedbackError(t('Mô tả chi tiết'));
+    if (!feedbackDesc.trim() && !poiData.code && !feedbackFile && recordedTrack.length === 0) {
+      setFeedbackError('Vui lòng nhập thông tin phòng/địa điểm, chụp ảnh hoặc ghi chú mô tả.');
       return;
     }
     setFeedbackSending(true);
@@ -721,6 +760,7 @@ export default function App() {
       description: feedbackDesc,
       contact: feedbackContact,
       hasPhoto: Boolean(feedbackFile),
+      poi: poiData.code ? { ...poiData } : null,
       gpsPointsCount: recordedTrack.length,
       trackCoordinates: recordedTrack,
       createdAt: new Date().toISOString()
@@ -736,6 +776,7 @@ export default function App() {
     fd.append('description', feedbackDesc);
     if (feedbackContact) fd.append('contact', feedbackContact);
     if (feedbackFile) fd.append('image', feedbackFile);
+    if (poiData.code) fd.append('poi', JSON.stringify(poiData));
     if (recordedTrack.length > 0) {
       fd.append('gps_trace', JSON.stringify(recordedTrack));
     }
@@ -750,6 +791,18 @@ export default function App() {
       setFeedbackContact('');
       setFeedbackFile(null);
       setFeedbackPhotoPreview(null);
+      setPoiData({
+        category: 'room',
+        buildingId: '',
+        floorNum: '',
+        code: '',
+        name: '',
+        coords: null
+      });
+      if (poiMarkerRef.current) {
+        poiMarkerRef.current.remove();
+        poiMarkerRef.current = null;
+      }
       setFeedbackOpen(false);
       setFeedbackSending(false);
     }
@@ -825,7 +878,9 @@ export default function App() {
         <div className="absolute top-20 left-1/2 -translate-x-1/2 z-40 bg-[#203354] text-white px-5 py-2.5 rounded-full shadow-2xl flex items-center gap-3 border border-white/20 animate-bounce">
           <div className="w-3 h-3 rounded-full bg-emerald-400 animate-ping" />
           <span className="text-[14px] font-medium">
-            {isSelectingPoint === 'start'
+            {isSelectingPoint === 'poi'
+              ? 'Nhấp chuột lên bản đồ để chọn Vị trí phòng / địa điểm đóng góp'
+              : isSelectingPoint === 'start'
               ? 'Nhấp chuột lên bản đồ để chọn Điểm xuất phát'
               : 'Nhấp chuột lên bản đồ để chọn Điểm đến'}
           </span>
@@ -833,6 +888,7 @@ export default function App() {
             onClick={() => {
               setIsSelectingPoint(null);
               if (mapInstanceRef.current) mapInstanceRef.current._selectingPointMode = null;
+              if (isSelectingPoint === 'poi') setFeedbackOpen(true);
             }}
             className="ml-2 text-xs bg-white/20 hover:bg-white/30 px-2 py-0.5 rounded cursor-pointer"
           >
@@ -925,6 +981,10 @@ export default function App() {
         onToggleRecordGPS={handleToggleRecordGPS}
         recordedTrack={recordedTrack}
         onExportTrack={handleExportTrack}
+        poiData={poiData}
+        setPoiData={setPoiData}
+        onPickPoiLocation={handlePickPoiLocation}
+        buildings={cachedBuildings}
         t={t}
       />
 
