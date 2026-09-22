@@ -6,5 +6,16 @@ export default defineConfig({
   server: {
     port: 3000,
     open: false
+  },
+  build: {
+    chunkSizeWarningLimit: 1200,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'maplibre-vendor': ['maplibre-gl'],
+          'react-vendor': ['react', 'react-dom']
+        }
+      }
+    }
   }
 });
