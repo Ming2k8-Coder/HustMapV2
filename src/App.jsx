@@ -42,13 +42,20 @@ const translations = {
     "Phòng học": "Phòng học",
     "Văn phòng": "Văn phòng",
     "Tự học": "Tự học",
-    "Khác": "Khác",
-    "Góc góp ý thay đổi": "Góc góp ý thay đổi",
-    "Mô tả chi tiết": "Mô tả chi tiết",
-    "Thêm ảnh mô tả": "Thêm ảnh mô tả",
+    "Góc góp ý thay đổi": "Đóng góp dữ liệu & Phản ánh",
+    "Mô tả chi tiết": "Mô tả chi tiết (Tên đường/phòng mới, lỗi bản đồ...)",
+    "Thêm ảnh mô tả": "Chụp ảnh / Tải ảnh minh chứng",
+    "Ghi lại lộ trình di chuyển (GPS Trace)": "Ghi lại lộ trình di chuyển (GPS Trace)",
+    "Đang ghi lộ trình...": "Đang ghi nhận tọa độ di chuyển...",
+    "Bắt đầu ghi GPS": "Bắt đầu ghi GPS",
+    "Dừng ghi GPS": "Dừng ghi GPS",
+    "Đã ghi được": "Đã ghi được",
+    "điểm tọa độ": "điểm tọa độ",
+    "Tải file GPX/GeoJSON": "Tải file lộ trình (.geojson)",
+    "Đóng góp của bạn đã được lưu! Cảm ơn bạn.": "Đóng góp của bạn đã được ghi nhận! Cảm ơn bạn.",
     "Phương thức liên lạc (email/fb/zalo)": "Phương thức liên lạc (email/fb/zalo)",
     "contact note": "chúng tôi cam kết bảo mật thông tin liên lạc của bạn",
-    "GỬI": "GỬI",
+    "GỬI": "GỬI ĐÓNG GÓP",
     "Định vị": "Định vị",
     "Kết quả tìm kiếm": "Kết quả tìm kiếm",
     "Đang gửi": "Đang gửi",
@@ -91,12 +98,20 @@ const translations = {
     "Văn phòng": "Office",
     "Tự học": "Self-study",
     "Khác": "Other",
-    "Góc góp ý thay đổi": "Feedback corner",
-    "Mô tả chi tiết": "Detailed description",
-    "Thêm ảnh mô tả": "Add description image",
+    "Góc góp ý thay đổi": "Contribute Data & Feedback",
+    "Mô tả chi tiết": "Detailed description (New road/room name, map bug...)",
+    "Thêm ảnh mô tả": "Take photo / Upload evidence",
+    "Ghi lại lộ trình di chuyển (GPS Trace)": "Record GPS Movement Trace",
+    "Đang ghi lộ trình...": "Recording movement coordinates...",
+    "Bắt đầu ghi GPS": "Start GPS Track",
+    "Dừng ghi GPS": "Stop GPS Track",
+    "Đã ghi được": "Recorded",
+    "điểm tọa độ": "track points",
+    "Tải file GPX/GeoJSON": "Download trace (.geojson)",
+    "Đóng góp của bạn đã được lưu! Cảm ơn bạn.": "Your contribution has been recorded! Thank you.",
     "Phương thức liên lạc (email/fb/zalo)": "Contact method (email/fb/zalo)",
     "contact note": "Only used if the HUSTMAP team needs to clarify or discuss your feedback further",
-    "GỬI": "SEND",
+    "GỬI": "SUBMIT CONTRIBUTION",
     "Định vị": "Locate",
     "Kết quả tìm kiếm": "Search result",
     "Đang gửi": "Sending",
@@ -136,13 +151,19 @@ export default function App() {
   const [routeResult, setRouteResult] = useState(null); // { distanceM, timeMins }
   const [isSelectingPoint, setIsSelectingPoint] = useState(null); // 'start' | 'end' | null
 
-  // Feedback modal
+  // Feedback & Contributing modal
   const [feedbackOpen, setFeedbackOpen] = useState(false);
   const [feedbackDesc, setFeedbackDesc] = useState('');
   const [feedbackContact, setFeedbackContact] = useState('');
   const [feedbackFile, setFeedbackFile] = useState(null);
+  const [feedbackPhotoPreview, setFeedbackPhotoPreview] = useState(null);
   const [feedbackError, setFeedbackError] = useState('');
   const [feedbackSending, setFeedbackSending] = useState(false);
+
+  // GPS Movement Logger / Contributing state
+  const [isRecordingGPS, setIsRecordingGPS] = useState(false);
+  const [recordedTrack, setRecordedTrack] = useState([]); // array of [lng, lat, timestamp]
+  const gpsWatchIdRef = useRef(null);
 
   const mapContainerRef = useRef(null);
   const mapInstanceRef = useRef(null);
@@ -151,6 +172,7 @@ export default function App() {
   const routerRef = useRef(null);
   const startMarkerRef = useRef(null);
   const endMarkerRef = useRef(null);
+  const recordedTrackRef = useRef([]);
 
   const t = (key) => {
     return translations[lang]?.[key] || key;
@@ -260,6 +282,36 @@ export default function App() {
             'line-color': '#2563EB',
             'line-width': 4,
             'line-dasharray': [1.5, 1.5]
+          }
+        });
+      }
+
+      // Add GPS live recorded trace source & line layer
+      if (!map.getSource('trace-source')) {
+        map.addSource('trace-source', {
+          type: 'geojson',
+          data: {
+            type: 'Feature',
+            properties: {},
+            geometry: {
+              type: 'LineString',
+              coordinates: []
+            }
+          }
+        });
+
+        map.addLayer({
+          id: 'trace-layer',
+          type: 'line',
+          source: 'trace-source',
+          layout: {
+            'line-join': 'round',
+            'line-cap': 'round'
+          },
+          paint: {
+            'line-color': '#F59E0B', // Vibrant Amber/Orange for recorded trace
+            'line-width': 5,
+            'line-opacity': 0.85
           }
         });
       }
@@ -561,27 +613,125 @@ export default function App() {
     }
   };
 
-  // Send Feedback
+  // GPS Trace Recording for Community Contributing
+  const handleToggleRecordGPS = () => {
+    if (isRecordingGPS) {
+      // Stop recording
+      setIsRecordingGPS(false);
+      if (gpsWatchIdRef.current !== null) {
+        navigator.geolocation.clearWatch(gpsWatchIdRef.current);
+        gpsWatchIdRef.current = null;
+      }
+    } else {
+      // Start recording
+      if (!('geolocation' in navigator)) {
+        alert('Trình duyệt không hỗ trợ Geolocation/GPS!');
+        return;
+      }
+      setIsRecordingGPS(true);
+      const points = [];
+      recordedTrackRef.current = points;
+      setRecordedTrack(points);
+
+      gpsWatchIdRef.current = navigator.geolocation.watchPosition(
+        (pos) => {
+          const lng = Number(pos.coords.longitude.toFixed(6));
+          const lat = Number(pos.coords.latitude.toFixed(6));
+          const pt = [lng, lat];
+          recordedTrackRef.current.push(pt);
+          setRecordedTrack([...recordedTrackRef.current]);
+
+          // Live update on map trace layer
+          const map = mapInstanceRef.current;
+          if (map && map.getSource('trace-source')) {
+            map.getSource('trace-source').setData({
+              type: 'Feature',
+              properties: {},
+              geometry: {
+                type: 'LineString',
+                coordinates: recordedTrackRef.current
+              }
+            });
+          }
+        },
+        (err) => console.warn('GPS Logging error:', err),
+        { enableHighAccuracy: true, maximumAge: 1000 }
+      );
+    }
+  };
+
+  const handleExportTrack = () => {
+    if (!recordedTrack || recordedTrack.length === 0) return;
+    const geojson = {
+      type: 'FeatureCollection',
+      features: [
+        {
+          type: 'Feature',
+          properties: {
+            name: 'HUST Campus User Track',
+            timestamp: new Date().toISOString(),
+            pointsCount: recordedTrack.length
+          },
+          geometry: {
+            type: 'LineString',
+            coordinates: recordedTrack
+          }
+        }
+      ]
+    };
+
+    const blob = new Blob([JSON.stringify(geojson, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `hustmap-track-${Date.now()}.geojson`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  // Send Feedback / Submit Contribution
   const handleSendFeedback = async () => {
     if (!feedbackDesc.trim()) {
       setFeedbackError(t('Mô tả chi tiết'));
       return;
     }
     setFeedbackSending(true);
+
+    const contributionRecord = {
+      id: Date.now(),
+      description: feedbackDesc,
+      contact: feedbackContact,
+      hasPhoto: Boolean(feedbackFile),
+      gpsPointsCount: recordedTrack.length,
+      trackCoordinates: recordedTrack,
+      createdAt: new Date().toISOString()
+    };
+
+    // Store locally in localStorage for persistent contributing logs
+    try {
+      const existing = JSON.parse(localStorage.getItem('hustmap_contributions') || '[]');
+      existing.push(contributionRecord);
+      localStorage.setItem('hustmap_contributions', JSON.stringify(existing));
+    } catch {}
+
     const fd = new FormData();
     fd.append('description', feedbackDesc);
     if (feedbackContact) fd.append('contact', feedbackContact);
     if (feedbackFile) fd.append('image', feedbackFile);
+    if (recordedTrack.length > 0) {
+      fd.append('gps_trace', JSON.stringify(recordedTrack));
+    }
 
     try {
       await fetch(`${API_BASE}/feedback`, { method: 'POST', body: fd });
     } catch {
       // offline silent success
     } finally {
-      alert('Gửi góp ý thành công!');
+      alert(t('Đóng góp của bạn đã được lưu! Cảm ơn bạn.'));
       setFeedbackDesc('');
       setFeedbackContact('');
       setFeedbackFile(null);
+      setFeedbackPhotoPreview(null);
       setFeedbackOpen(false);
       setFeedbackSending(false);
     }
@@ -987,42 +1137,132 @@ export default function App() {
             >
               ×
             </button>
-            <div className="popup-content p-[20px] text-[16px] font-semibold flex flex-col">
-              <div className="tittle text-[27px]">{t('Góc góp ý thay đổi')}</div>
+            <div className="popup-content p-[20px] text-[15px] font-semibold flex flex-col max-h-[85vh] overflow-y-auto w-[92vw] sm:w-[460px]">
+              <div className="tittle text-[22px] sm:text-[25px] text-[#203354] mb-2">{t('Góc góp ý thay đổi')}</div>
+
+              {/* GPS Movement Logger Section */}
+              <div className="gps-section mb-4 p-3 bg-[#EBF3FE] border border-[#BFDBFE] rounded-xl">
+                <div className="flex items-center justify-between mb-1.5">
+                  <div className="flex items-center gap-1.5 text-[#1E3A8A] font-bold text-[13px] sm:text-[14px]">
+                    <span className="text-base">📍</span>
+                    {t('Ghi lại lộ trình di chuyển (GPS Trace)')}
+                  </div>
+                  {isRecordingGPS && (
+                    <span className="flex h-2.5 w-2.5 relative">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                      <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-600"></span>
+                    </span>
+                  )}
+                </div>
+                <p className="text-[11px] text-gray-600 mb-2 font-normal">
+                  Bật ghi GPS khi bạn đi bộ trên tuyến đường mới trong trường. Tọa độ thực tế sẽ được thu thập trực tiếp để nắn chuẩn bản đồ.
+                </p>
+
+                <div className="flex items-center gap-2 flex-wrap">
+                  <button
+                    type="button"
+                    onClick={handleToggleRecordGPS}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 cursor-pointer ${
+                      isRecordingGPS
+                        ? 'bg-red-600 text-white hover:bg-red-700 animate-pulse'
+                        : 'bg-[#203354] text-white hover:bg-[#2A436D]'
+                    }`}
+                  >
+                    {isRecordingGPS ? t('Dừng ghi GPS') : t('Bắt đầu ghi GPS')}
+                  </button>
+
+                  <div className="text-xs text-gray-700 font-medium">
+                    {t('Đã ghi được')}: <span className="font-bold text-blue-700">{recordedTrack.length}</span> {t('điểm tọa độ')}
+                  </div>
+
+                  {recordedTrack.length > 0 && (
+                    <button
+                      type="button"
+                      onClick={handleExportTrack}
+                      className="ml-auto text-[11px] bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 px-2 py-1 rounded-md font-medium cursor-pointer"
+                      title="Tải file GeoJSON lưu trữ"
+                    >
+                      💾 {t('Tải file GPX/GeoJSON')}
+                    </button>
+                  )}
+                </div>
+              </div>
+
               <div className="description-section">
-                <div>{t('Mô tả chi tiết')}</div>
+                <div className="text-xs font-semibold text-gray-600 mb-1">{t('Mô tả chi tiết')}</div>
                 <textarea
-                  className="w-full border rounded p-2 mb-3 text-[13px]"
-                  rows={4}
+                  className="w-full border rounded-lg p-2 mb-2 text-[13px] bg-white outline-none focus:border-blue-500"
+                  rows={3}
+                  placeholder="Ví dụ: Lối đi bộ giữa D3 và C10 mới mở thêm; hoặc phòng 302-D9 đổi thành phòng thí nghiệm AI..."
                   value={feedbackDesc}
                   onChange={(e) => setFeedbackDesc(e.target.value)}
                 />
                 {feedbackError && (
-                  <div className="text-[#C00B0B] font-medium text-[14px] my-[5px]">
+                  <div className="text-[#C00B0B] font-medium text-[13px] my-[3px]">
                     {feedbackError}
                   </div>
                 )}
               </div>
-              <div className="image-section mb-[15px]">
-                <div>{t('Thêm ảnh mô tả')}</div>
-                <input
-                  type="file"
-                  className="bg-white border p-[5px] text-[10px]"
-                  onChange={(e) => setFeedbackFile(e.target.files?.[0] || null)}
-                />
+
+              {/* Photo Upload & Camera Section */}
+              <div className="image-section mb-3">
+                <div className="text-xs font-semibold text-gray-600 mb-1">{t('Thêm ảnh mô tả')}</div>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    capture="environment"
+                    className="bg-white border rounded-lg p-1.5 text-[12px] flex-1 cursor-pointer"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0] || null;
+                      setFeedbackFile(file);
+                      if (file) {
+                        setFeedbackPhotoPreview(URL.createObjectURL(file));
+                      } else {
+                        setFeedbackPhotoPreview(null);
+                      }
+                    }}
+                  />
+                  {feedbackPhotoPreview && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setFeedbackFile(null);
+                        setFeedbackPhotoPreview(null);
+                      }}
+                      className="text-xs text-red-600 hover:underline cursor-pointer"
+                    >
+                      Xóa ảnh
+                    </button>
+                  )}
+                </div>
+
+                {/* Photo Preview Thumbnail */}
+                {feedbackPhotoPreview && (
+                  <div className="mt-2 relative w-24 h-24 rounded-lg overflow-hidden border shadow-sm">
+                    <img
+                      src={feedbackPhotoPreview}
+                      alt="Preview"
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                )}
               </div>
-              <div className="contact-section">
-                <div>{t('Phương thức liên lạc (email/fb/zalo)')}</div>
-                <div className="text-[10px]">{t('contact note')}</div>
-                <textarea
-                  className="w-full border rounded p-2 mb-3 text-[13px]"
-                  rows={1}
+
+              <div className="contact-section mb-3">
+                <div className="text-xs font-semibold text-gray-600 mb-0.5">{t('Phương thức liên lạc (email/fb/zalo)')}</div>
+                <div className="text-[10px] text-gray-400 mb-1">{t('contact note')}</div>
+                <input
+                  type="text"
+                  className="w-full border rounded-lg p-2 text-[13px] bg-white outline-none focus:border-blue-500"
+                  placeholder="name@gmail.com / SĐT / Link Facebook"
                   value={feedbackContact}
                   onChange={(e) => setFeedbackContact(e.target.value)}
                 />
               </div>
+
               <button
-                className="w-full bg-[#203354] text-white font-bold py-2 rounded-[3px]"
+                className="w-full bg-[#203354] hover:bg-[#2A436D] text-white font-bold py-2.5 rounded-lg transition shadow-md cursor-pointer"
                 onClick={handleSendFeedback}
               >
                 {feedbackSending ? t('Đang gửi') : t('GỬI')}
