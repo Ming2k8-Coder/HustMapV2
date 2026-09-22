@@ -9,6 +9,7 @@ import { SearchModal } from './components/SearchModal';
 import { RoomModal } from './components/RoomModal';
 import { FeedbackModal } from './components/FeedbackModal';
 import OfflineModal from './components/OfflineModal';
+import GuideModal from './components/GuideModal';
 import { checkOfflineStatus } from './services/offlineManager';
 
 const API_BASE = '/api/v1';
@@ -23,6 +24,10 @@ export default function App() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [searchModalOpen, setSearchModalOpen] = useState(false);
+
+  // 3D Visualization & Guide state
+  const [is3DMode, setIs3DMode] = useState(false);
+  const [guideModalOpen, setGuideModalOpen] = useState(false);
 
   // Selected feature modal data
   const [selectedFeature, setSelectedFeature] = useState(null); // { type, data }
@@ -222,6 +227,51 @@ export default function App() {
             'line-color': '#F59E0B',
             'line-width': 5,
             'line-opacity': 0.85
+          }
+        });
+      }
+
+      // Add 3D Buildings Extrusion Layer (HUST Campus 3D Vis)
+      if (!map.getLayer('hustmap-3d-buildings') && map.getSource('map26maptiler')) {
+        map.addLayer({
+          id: 'hustmap-3d-buildings',
+          source: 'map26maptiler',
+          'source-layer': 'multipolygons',
+          type: 'fill-extrusion',
+          filter: [
+            'match',
+            ['get', 'types'],
+            ['uni_building', 'DEMO uni_building', 'uni_other_building'],
+            true,
+            false
+          ],
+          layout: {
+            visibility: 'none' // Mặc định ở chế độ 2D, khi bật 3D sẽ chuyển thành 'visible'
+          },
+          paint: {
+            // Chiều cao tòa nhà: nếu tòa nhà D8 là 11 tầng (~40m), thư viện ~22m, các tòa D3, C7... theo số tầng
+            'fill-extrusion-height': [
+              'interpolate', ['linear'], ['zoom'],
+              16, 0,
+              16.5, [
+                'match',
+                ['get', 'name'],
+                ['D8', 'NHÀ B1'], 42,
+                ['C7'], 32,
+                ['THƯ VIỆN TẠ QUANG BỬU', 'D3', 'D4', 'D5', 'D7', 'D9', 'D3-5'], 20,
+                ['C1', 'C5', 'C10'], 16,
+                ['C2', 'C3', 'C4', 'C3-4', 'D2A'], 12,
+                14 // Mặc định các tòa khác là ~14 mét (~3-4 tầng)
+              ]
+            ],
+            'fill-extrusion-base': 0,
+            'fill-extrusion-color': [
+              'match',
+              ['get', 'types'],
+              ['uni_building', 'DEMO uni_building'], '#2A436D',
+              '#4B5563'
+            ],
+            'fill-extrusion-opacity': 0.94
           }
         });
       }
@@ -477,6 +527,35 @@ export default function App() {
     }
   };
 
+  // Toggle 3D / 2D Visualization Mode
+  const handleToggle3DMode = () => {
+    const map = mapInstanceRef.current;
+    if (!map) return;
+
+    const next3D = !is3DMode;
+    setIs3DMode(next3D);
+
+    if (map.getLayer('hustmap-3d-buildings')) {
+      map.setLayoutProperty('hustmap-3d-buildings', 'visibility', next3D ? 'visible' : 'none');
+    }
+
+    if (next3D) {
+      // Chuyển sang 3D: Nghiêng góc camera 60 độ, xoay nhẹ góc nhìn phối cảnh
+      map.easeTo({
+        pitch: 60,
+        bearing: -20,
+        duration: 1000
+      });
+    } else {
+      // Chuyển về 2D: Nhìn thẳng đứng từ trên xuống, quay về hướng Bắc 0 độ
+      map.easeTo({
+        pitch: 0,
+        bearing: 0,
+        duration: 1000
+      });
+    }
+  };
+
   // Zoom to feature
   const handleZoomToFeature = (lng, lat) => {
     const map = mapInstanceRef.current;
@@ -662,6 +741,9 @@ export default function App() {
         t={t}
         onOpenOfflineModal={() => setOfflineModalOpen(true)}
         isOfflineReady={isOfflineReady}
+        is3DMode={is3DMode}
+        onToggle3DMode={handleToggle3DMode}
+        onOpenGuideModal={() => setGuideModalOpen(true)}
       />
 
       {/* Building / Facility Popup */}
@@ -814,6 +896,12 @@ export default function App() {
           setOfflineModalOpen(false);
           checkOfflineStatus().then((res) => setIsOfflineReady(res.isReady));
         }}
+      />
+
+      {/* 3D & Gestures Guide Modal */}
+      <GuideModal
+        isOpen={guideModalOpen}
+        onClose={() => setGuideModalOpen(false)}
       />
 
       {/* Initial Map Loading Splash */}

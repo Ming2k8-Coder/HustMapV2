@@ -10,12 +10,39 @@ export function NavigationBar({
   onChangeLanguage,
   t,
   onOpenOfflineModal,
-  isOfflineReady
+  isOfflineReady,
+  is3DMode,
+  onToggle3DMode,
+  onOpenGuideModal
 }) {
   return (
     <>
-      {/* Language Switcher & Offline Buttons */}
-      <div className="absolute top-20 sm:top-6 right-6 z-30 flex items-center gap-1.5 bg-white/90 backdrop-blur-sm p-1 rounded-xl shadow-md border border-gray-100">
+      {/* Top Right Bar: 3D Toggle, Guide, Offline, Language Switcher */}
+      <div className="absolute top-20 sm:top-6 right-6 z-30 flex items-center gap-1.5 bg-white/95 backdrop-blur-sm p-1 rounded-xl shadow-md border border-gray-100">
+        {/* 3D Vis Toggle Button */}
+        <button
+          onClick={onToggle3DMode}
+          className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${
+            is3DMode
+              ? 'bg-amber-500 text-white shadow-sm hover:bg-amber-600'
+              : 'bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-200'
+          }`}
+          title="Bật/Tắt chế độ Trực quan 3D (3D Vis)"
+        >
+          <span className="text-[13px] font-extrabold">{is3DMode ? '3D' : '2D'}</span>
+        </button>
+
+        {/* Guide / Hướng dẫn Button */}
+        <button
+          onClick={onOpenGuideModal}
+          className="flex items-center justify-center w-7 h-7 rounded-lg text-xs font-bold text-gray-700 bg-gray-100 hover:bg-gray-200 border border-gray-200 transition cursor-pointer"
+          title="Hướng dẫn thao tác bản đồ & cử chỉ 3D"
+        >
+          ?
+        </button>
+
+        <div className="h-4 w-[1px] bg-gray-200 my-auto"></div>
+
         {/* Offline Ready Toggle / Status Button */}
         <button
           onClick={onOpenOfflineModal}
