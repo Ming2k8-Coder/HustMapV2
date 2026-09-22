@@ -770,7 +770,9 @@ export default function App() {
       const existing = JSON.parse(localStorage.getItem('hustmap_contributions') || '[]');
       existing.push(contributionRecord);
       localStorage.setItem('hustmap_contributions', JSON.stringify(existing));
-    } catch {}
+    } catch (_err) {
+      // Ignore local storage error
+    }
 
     const fd = new FormData();
     fd.append('description', feedbackDesc);
