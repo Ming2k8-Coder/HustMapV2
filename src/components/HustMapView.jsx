@@ -1,5 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import maplibregl from 'maplibre-gl';
+import { getAssetUrl } from '../utils/assetUrl';
 
 const HUST_CENTER = [105.8431793, 21.006275];
 const BOUNDS = [
@@ -22,13 +23,25 @@ export default function HustMapView({
 
     const map = new maplibregl.Map({
       container: containerRef.current,
-      style: '/style.json',
+      style: getAssetUrl('/style.json'),
       center: HUST_CENTER,
       zoom: 17,
       minZoom: 15,
       maxZoom: 20,
       maxBounds: BOUNDS,
-      attributionControl: false
+      attributionControl: false,
+      transformRequest: (url) => {
+        if (url.startsWith('/')) {
+          const base = import.meta.env.BASE_URL || '/';
+          if (base !== '/' && !url.startsWith(base)) {
+            const cleanBase = base.endsWith('/') ? base : `${base}/`;
+            const cleanPath = url.slice(1);
+            return { url: `${window.location.origin}${cleanBase}${cleanPath}` };
+          }
+          return { url: `${window.location.origin}${url}` };
+        }
+        return { url };
+      }
     });
 
     map.addControl(

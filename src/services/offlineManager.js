@@ -1,4 +1,6 @@
-﻿/**
+import { getAssetUrl } from '../utils/assetUrl.js';
+
+/**
  * HustMap Offline Manager
  * Tải và lưu trữ toàn bộ bản đồ về máy thiết bị (CacheStorage) tương tự Google Drive/Docs Offline.
  */
@@ -11,18 +13,17 @@ export async function checkOfflineStatus() {
   }
 
   try {
-    const res = await fetch('/offline_assets.json');
+    const res = await fetch(getAssetUrl('/offline_assets.json'));
     if (!res.ok) return { supported: true, isReady: false, cachedCount: 0, totalCount: 0 };
     const assets = await res.json();
     const totalCount = assets.length;
 
     const cache = await caches.open(CACHE_NAME);
-    const keys = await cache.keys();
     
     // Đếm số lượng asset trong offline_assets đã có trong cache
     let cachedCount = 0;
     for (const asset of assets) {
-      const match = await cache.match(asset);
+      const match = await cache.match(getAssetUrl(asset));
       if (match) cachedCount++;
     }
 
@@ -39,7 +40,7 @@ export async function downloadAllForOffline(onProgress) {
     throw new Error('Trình duyệt không hỗ trợ CacheStorage / Service Worker.');
   }
 
-  const res = await fetch('/offline_assets.json');
+  const res = await fetch(getAssetUrl('/offline_assets.json'));
   if (!res.ok) throw new Error('Không thể tải danh sách tài nguyên offline_assets.json');
   const assets = await res.json();
   const total = assets.length;
@@ -54,17 +55,18 @@ export async function downloadAllForOffline(onProgress) {
   async function worker() {
     while (index < assets.length) {
       const currentIndex = index++;
-      const url = assets[currentIndex];
+      const rawUrl = assets[currentIndex];
+      const targetUrl = getAssetUrl(rawUrl);
       try {
-        const match = await cache.match(url);
+        const match = await cache.match(targetUrl);
         if (!match) {
-          const fetchRes = await fetch(url, { cache: 'no-cache' });
+          const fetchRes = await fetch(targetUrl, { cache: 'no-cache' });
           if (fetchRes && fetchRes.ok) {
-            await cache.put(url, fetchRes);
+            await cache.put(targetUrl, fetchRes);
           }
         }
       } catch (e) {
-        console.warn('Lỗi tải asset ngoại tuyến:', url, e);
+        console.warn('Lỗi tải asset ngoại tuyến:', targetUrl, e);
       } finally {
         completed++;
         if (onProgress) {
@@ -72,7 +74,7 @@ export async function downloadAllForOffline(onProgress) {
             completed,
             total,
             percentage: Math.min(100, Math.round((completed / total) * 100)),
-            currentUrl: url
+            currentUrl: targetUrl
           });
         }
       }

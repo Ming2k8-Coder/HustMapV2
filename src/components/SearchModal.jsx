@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { getAssetUrl } from '../utils/assetUrl.js';
 
 export function SearchModal({ open, searchTerm, onZoomToFeature, onStartRouteTo, cachedBuildings, cachedRooms, cachedParkings, t }) {
   const [results, setResults] = useState([]);
@@ -138,7 +139,7 @@ export function SearchModal({ open, searchTerm, onZoomToFeature, onStartRouteTo,
                           }}
                         >
                           <img
-                            src="/icon/navigation.svg"
+                            src={getAssetUrl('/icon/navigation.svg')}
                             alt="Định vị"
                             width={14}
                             height={14}
@@ -209,7 +210,7 @@ export function SearchModal({ open, searchTerm, onZoomToFeature, onStartRouteTo,
                       }}
                     >
                       <img
-                        src="/icon/navigation.svg"
+                        src={getAssetUrl('/icon/navigation.svg')}
                         alt="Định vị"
                         width={16}
                         height={16}

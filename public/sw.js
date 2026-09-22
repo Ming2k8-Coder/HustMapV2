@@ -1,18 +1,17 @@
-﻿// HustMap Service Worker - Offline Ready & 3G Optimization
+// HustMap Service Worker - Offline Ready & 3G Optimization
 const CACHE_NAME = 'hustmap-offline-v1';
 const PRECACHE_SHELL = [
-  '/',
-  '/index.html',
-  '/manifest.json',
-  '/favicon.ico',
-  '/hustmap_font.css',
-  '/hustmap_original.css',
-  '/api_style_vi.json',
-  '/api_style_en.json',
-  '/buildings.json',
-  '/campus_roads.json',
-  '/navigation_nodes.json',
-  '/offline_assets.json'
+  './',
+  './index.html',
+  './manifest.json',
+  './favicon.ico',
+  './hustmap_font.css',
+  './hustmap_original.css',
+  './api_style_vi.json',
+  './api_style_en.json',
+  './buildings.json',
+  './campus_roads.json',
+  './offline_assets.json'
 ];
 
 self.addEventListener('install', (event) => {
@@ -48,10 +47,11 @@ self.addEventListener('fetch', (event) => {
   }
 
   const isMapAsset = (
-    url.pathname.startsWith('/tiles/') ||
-    url.pathname.startsWith('/fonts/') ||
-    url.pathname.startsWith('/sprites/') ||
-    url.pathname.startsWith('/building_images/') ||
+    url.pathname.includes('/tiles/') ||
+    url.pathname.includes('/fonts/') ||
+    url.pathname.includes('/sprites/') ||
+    url.pathname.includes('/style/') ||
+    url.pathname.includes('/building_images/') ||
     url.pathname.endsWith('.pbf') ||
     url.pathname.endsWith('.woff2') ||
     url.pathname.endsWith('.woff') ||

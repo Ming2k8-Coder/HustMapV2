@@ -12,6 +12,7 @@ import OfflineModal from './components/OfflineModal';
 import GuideModal from './components/GuideModal';
 import NerdOverlay from './components/NerdOverlay';
 import { checkOfflineStatus } from './services/offlineManager';
+import { getAssetUrl } from './utils/assetUrl';
 
 const API_BASE = '/api/v1';
 
@@ -62,7 +63,8 @@ export default function App() {
   // Register Service Worker & check offline status
   useEffect(() => {
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/sw.js')
+      const base = import.meta.env.BASE_URL || '/';
+      navigator.serviceWorker.register(getAssetUrl('/sw.js'), { scope: base })
         .then(() => console.log('[HustMap] Service Worker registered successfully.'))
         .catch((err) => console.warn('[HustMap] SW registration failed:', err));
     }
@@ -111,19 +113,19 @@ export default function App() {
 
   // Pre-load local fallback dataset & campus road network
   useEffect(() => {
-    fetch('/buildings.json')
+    fetch(getAssetUrl('/buildings.json'))
       .then((r) => r.json())
       .then((data) => (cachedBuildings = data))
       .catch(() => {});
-    fetch('/parkings.json')
+    fetch(getAssetUrl('/parkings.json'))
       .then((r) => r.json())
       .then((data) => (cachedParkings = data))
       .catch(() => {});
-    fetch('/rooms_all.json')
+    fetch(getAssetUrl('/rooms_all.json'))
       .then((r) => r.json())
       .then((data) => (cachedRooms = data))
       .catch(() => {});
-    fetch('/campus_roads.json')
+    fetch(getAssetUrl('/campus_roads.json'))
       .then((r) => r.json())
       .then((roads) => {
         routerRef.current = new CampusRouter(roads);
@@ -135,7 +137,7 @@ export default function App() {
   const changeLanguage = (newLang) => {
     setLang(newLang);
     if (mapInstanceRef.current) {
-      mapInstanceRef.current.setStyle(newLang === 'en' ? '/api_style_en.json' : '/api_style_vi.json');
+      mapInstanceRef.current.setStyle(getAssetUrl(newLang === 'en' ? '/api_style_en.json' : '/api_style_vi.json'));
     }
   };
 
@@ -144,7 +146,7 @@ export default function App() {
     if (!mapContainerRef.current) return;
 
     let watchId;
-    const styleUrl = lang === 'en' ? '/api_style_en.json' : '/api_style_vi.json';
+    const styleUrl = getAssetUrl(lang === 'en' ? '/api_style_en.json' : '/api_style_vi.json');
 
     const map = new maplibregl.Map({
       container: mapContainerRef.current,
@@ -164,6 +166,12 @@ export default function App() {
       attributionControl: false,
       transformRequest: (url) => {
         if (url.startsWith('/')) {
+          const base = import.meta.env.BASE_URL || '/';
+          if (base !== '/' && !url.startsWith(base)) {
+            const cleanBase = base.endsWith('/') ? base : `${base}/`;
+            const cleanPath = url.slice(1);
+            return { url: `${window.location.origin}${cleanBase}${cleanPath}` };
+          }
           return { url: `${window.location.origin}${url}` };
         }
         return { url };
@@ -868,7 +876,7 @@ export default function App() {
 
       {/* Vietnamese Flag Ribbon */}
       <img
-        src="/icon/coVN.png"
+        src={getAssetUrl('/icon/coVN.png')}
         alt="Viet Nam"
         width={270}
         height={80}
@@ -955,7 +963,7 @@ export default function App() {
         onClick={() => setFeedbackOpen(true)}
       >
         <img
-          src="/icon/fb.svg"
+          src={getAssetUrl('/icon/fb.svg')}
           alt="Feedback"
           width={15}
           height={15}

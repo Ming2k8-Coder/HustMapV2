@@ -1,4 +1,5 @@
 import React from 'react';
+import { getAssetUrl } from '../utils/assetUrl.js';
 
 export function FeaturePopup({
   selectedFeature,
@@ -35,7 +36,7 @@ export function FeaturePopup({
                   }
                 }}
               >
-                <img src="/icon/navigation.svg" alt="Route" width={14} height={14} className="brightness-200 invert" />
+                <img src={getAssetUrl('/icon/navigation.svg')} alt="Route" width={14} height={14} className="brightness-200 invert" />
                 <span>{t('Tìm đường')}</span>
               </button>
             )}
@@ -43,7 +44,7 @@ export function FeaturePopup({
           <div className="PopupChild-container flex justify-center gap-x-5">
             <div className="leftGrandChild basis-[60%] sm:basis-[70%] mt-[10px] sm:mt-[0px]">
               <img
-                src={selectedFeature.data.image}
+                src={getAssetUrl(selectedFeature.data.image)}
                 alt={selectedFeature.data.name}
                 width={292}
                 height={181}
@@ -116,14 +117,14 @@ export function FeaturePopup({
                   }
                 }}
               >
-                <img src="/icon/navigation.svg" alt="Route" width={14} height={14} className="brightness-200 invert" />
+                <img src={getAssetUrl('/icon/navigation.svg')} alt="Route" width={14} height={14} className="brightness-200 invert" />
                 <span>{t('Tìm đường')}</span>
               </button>
             )}
           </div>
           <div className="w-full aspect-video overflow-hidden">
             <img
-              src={selectedFeature.data.image}
+              src={getAssetUrl(selectedFeature.data.image)}
               alt={selectedFeature.data.name}
               width={487}
               height={281}
@@ -142,12 +143,12 @@ export function FeaturePopup({
           <div className="Info-container text-[18px] sm:text-[20px] font-medium space-y-1 sm:space-y-2">
             <div>{t('Dành cho: ô tô')}</div>
             <div className="Time-container flex flex-row items-center">
-              <img src="/icon/time.svg" alt="Giờ mở cửa" width={30} height={30} className="w-[30px] mr-[8px]" />
+              <img src={getAssetUrl('/icon/time.svg')} alt="Giờ mở cửa" width={30} height={30} className="w-[30px] mr-[8px]" />
               <div className="open_hour-content pt-[8px]">{selectedFeature.data.open_hour}</div>
             </div>
             <div className="Price-container flex flex-row">
               <div>
-                <img src="/icon/price.svg" alt="Giá" width={32} height={32} className="w-[32px] mr-[8px]" />
+                <img src={getAssetUrl('/icon/price.svg')} alt="Giá" width={32} height={32} className="w-[32px] mr-[8px]" />
               </div>
               <div className="price-content-container pt-[8px]">
                 <div className="font-bold underline">free</div>
@@ -178,12 +179,12 @@ export function FeaturePopup({
           <div className="Info-container text-[18px] sm:text-[20px] font-medium space-y-1 sm:space-y-2">
             <div>{t('Dành cho: xe máy')}</div>
             <div className="Time-container flex flex-row items-center">
-              <img src="/icon/time.svg" alt="Giờ mở cửa" width={40} height={40} className="w-[40px] mr-[8px]" />
+              <img src={getAssetUrl('/icon/time.svg')} alt="Giờ mở cửa" width={40} height={40} className="w-[40px] mr-[8px]" />
               <div className="open_hour-content pt-[8px]">{selectedFeature.data.open_hour}</div>
             </div>
             <div className="Price-container flex flex-row">
               <div>
-                <img src="/icon/price.svg" alt="Giá" width={40} height={40} className="w-[40px] mr-[8px]" />
+                <img src={getAssetUrl('/icon/price.svg')} alt="Giá" width={40} height={40} className="w-[40px] mr-[8px]" />
               </div>
               <div className="price-content-container pt-[8px]">
                 <div className="font-bold underline"> 6:00 - 18:00:</div>

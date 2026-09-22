@@ -1,3 +1,5 @@
+import { getAssetUrl } from '../utils/assetUrl.js';
+
 const API_BASE = 'https://api.hustmap.com/api/v1';
 
 export async function fetchBuildings() {
@@ -7,7 +9,7 @@ export async function fetchBuildings() {
   } catch (err) {
     console.warn('Fallback to local buildings cache', err);
   }
-  const local = await fetch('/buildings.json');
+  const local = await fetch(getAssetUrl('/buildings.json'));
   return await local.json();
 }
 
@@ -18,7 +20,7 @@ export async function fetchParkings() {
   } catch (err) {
     console.warn('Fallback to local parkings cache', err);
   }
-  const local = await fetch('/parkings.json');
+  const local = await fetch(getAssetUrl('/parkings.json'));
   return await local.json();
 }
 

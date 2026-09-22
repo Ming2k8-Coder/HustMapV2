@@ -1,4 +1,5 @@
 import React from 'react';
+import { getAssetUrl } from '../utils/assetUrl.js';
 
 export default function ParkingModal({ parking, type, onClose, t }) {
   if (!parking) return null;
@@ -27,7 +28,7 @@ export default function ParkingModal({ parking, type, onClose, t }) {
         {/* Operating hours */}
         <div className="flex items-center gap-3">
           <img
-            src="/icon/time.svg"
+            src={getAssetUrl('/icon/time.svg')}
             alt="Hours"
             className="w-8 h-8 shrink-0"
           />
@@ -40,7 +41,7 @@ export default function ParkingModal({ parking, type, onClose, t }) {
         {/* Price section */}
         <div className="flex items-start gap-3">
           <img
-            src="/icon/price.svg"
+            src={getAssetUrl('/icon/price.svg')}
             alt="Price"
             className="w-8 h-8 shrink-0 mt-0.5"
           />

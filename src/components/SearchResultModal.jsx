@@ -1,4 +1,5 @@
 import React from 'react';
+import { getAssetUrl } from '../utils/assetUrl.js';
 
 export default function SearchResultModal({ open, results, loading, onClose, onLocate, t }) {
   if (!open) return null;
@@ -99,7 +100,7 @@ export default function SearchResultModal({ open, results, loading, onClose, onL
                     className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-red-50 text-red-800 hover:bg-red-100 active:scale-95 text-[12px] font-semibold transition shrink-0"
                   >
                     <img
-                      src="/icon/navigation.svg"
+                      src={getAssetUrl('/icon/navigation.svg')}
                       alt={t.locate}
                       className="w-3.5 h-3.5"
                     />

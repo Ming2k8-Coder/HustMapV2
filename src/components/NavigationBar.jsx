@@ -1,4 +1,5 @@
 import React from 'react';
+import { getAssetUrl } from '../utils/assetUrl.js';
 
 export function NavigationBar({
   searchTerm,
@@ -89,7 +90,7 @@ export function NavigationBar({
           }`}
         >
           <img
-            src="/icon/eng.svg"
+            src={getAssetUrl('/icon/eng.svg')}
             alt="ENG"
             width={22}
             height={22}
@@ -103,7 +104,7 @@ export function NavigationBar({
           }`}
         >
           <img
-            src="/icon/VN.svg"
+            src={getAssetUrl('/icon/VN.svg')}
             alt="VN"
             width={22}
             height={22}
@@ -126,7 +127,7 @@ export function NavigationBar({
             }}
           />
           <img
-            src="/icon/search.svg"
+            src={getAssetUrl('/icon/search.svg')}
             alt="search"
             width={20}
             height={20}
@@ -146,7 +147,7 @@ export function NavigationBar({
           title={t('Tìm đường')}
         >
           <img
-            src="/icon/navigation.svg"
+            src={getAssetUrl('/icon/navigation.svg')}
             alt="Route"
             width={18}
             height={18}

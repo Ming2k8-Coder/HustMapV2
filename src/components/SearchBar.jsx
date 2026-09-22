@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
+import { getAssetUrl } from '../utils/assetUrl.js';
 
-export default function SearchBar({ onSearch, lang, t }) {
+export default function SearchBar({ onSearch, lang: _lang, t }) {
   const [term, setTerm] = useState('');
 
   const handleKeyDown = (e) => {
@@ -25,7 +26,7 @@ export default function SearchBar({ onSearch, lang, t }) {
         className="ml-2 hover:scale-110 active:scale-95 transition-transform"
       >
         <img
-          src="/icon/search.svg"
+          src={getAssetUrl('/icon/search.svg')}
           alt="search"
           width={20}
           height={20}
