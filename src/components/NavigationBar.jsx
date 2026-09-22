@@ -8,37 +8,63 @@ export function NavigationBar({
   onToggleRouteModal,
   lang,
   onChangeLanguage,
-  t
+  t,
+  onOpenOfflineModal,
+  isOfflineReady
 }) {
   return (
     <>
-      {/* Language Switcher Buttons */}
-      <div className="absolute top-20 sm:top-6 right-6 z-30 flex">
+      {/* Language Switcher & Offline Buttons */}
+      <div className="absolute top-20 sm:top-6 right-6 z-30 flex items-center gap-1.5 bg-white/90 backdrop-blur-sm p-1 rounded-xl shadow-md border border-gray-100">
+        {/* Offline Ready Toggle / Status Button */}
+        <button
+          onClick={onOpenOfflineModal}
+          className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${
+            isOfflineReady
+              ? 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200'
+              : 'bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-200'
+          }`}
+          title="Lưu bản đồ tại máy để dùng ngoại tuyến (Offline Mode)"
+        >
+          {isOfflineReady ? (
+            <svg className="w-4 h-4 text-emerald-600" fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+            </svg>
+          ) : (
+            <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10" />
+            </svg>
+          )}
+          <span className="hidden md:inline">{isOfflineReady ? 'Đã lưu Offline' : 'Lưu Offline'}</span>
+        </button>
+
+        <div className="h-4 w-[1px] bg-gray-200 my-auto"></div>
+
         <button
           onClick={() => onChangeLanguage('en')}
-          className={`px-[8px] rounded font-bold transition cursor-pointer ${
+          className={`px-[8px] py-1 rounded font-bold transition cursor-pointer ${
             lang === 'en' ? 'bg-[#5D92EB]' : 'bg-transparent'
           }`}
         >
           <img
             src="/icon/eng.svg"
             alt="ENG"
-            width={25}
-            height={25}
+            width={22}
+            height={22}
             className="fb-icon align-middle"
           />
         </button>
         <button
           onClick={() => onChangeLanguage('vi')}
-          className={`px-[8px] rounded font-bold transition cursor-pointer ${
+          className={`px-[8px] py-1 rounded font-bold transition cursor-pointer ${
             lang === 'vi' ? 'bg-red-100' : 'bg-transparent'
           }`}
         >
           <img
             src="/icon/VN.svg"
             alt="VN"
-            width={25}
-            height={25}
+            width={22}
+            height={22}
             className="fb-icon align-middle"
           />
         </button>

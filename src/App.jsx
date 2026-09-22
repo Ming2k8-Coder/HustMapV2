@@ -8,6 +8,8 @@ import { RoutePanel } from './components/RoutePanel';
 import { SearchModal } from './components/SearchModal';
 import { RoomModal } from './components/RoomModal';
 import { FeedbackModal } from './components/FeedbackModal';
+import OfflineModal from './components/OfflineModal';
+import { checkOfflineStatus } from './services/offlineManager';
 
 const API_BASE = '/api/v1';
 
@@ -42,6 +44,22 @@ export default function App() {
   const [routeEnd, setRouteEnd] = useState(null); // { name, lng, lat }
   const [routeResult, setRouteResult] = useState(null); // { distanceM, timeMins }
   const [isSelectingPoint, setIsSelectingPoint] = useState(null); // 'start' | 'end' | null
+
+  // Offline Mode state
+  const [offlineModalOpen, setOfflineModalOpen] = useState(false);
+  const [isOfflineReady, setIsOfflineReady] = useState(false);
+
+  // Register Service Worker & check offline status
+  useEffect(() => {
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/sw.js')
+        .then(() => console.log('[HustMap] Service Worker registered successfully.'))
+        .catch((err) => console.warn('[HustMap] SW registration failed:', err));
+    }
+    checkOfflineStatus().then((res) => {
+      setIsOfflineReady(res.isReady);
+    });
+  }, []);
 
   // Feedback & Contributing modal
   const [feedbackOpen, setFeedbackOpen] = useState(false);
@@ -647,6 +665,8 @@ export default function App() {
         lang={lang}
         onChangeLanguage={changeLanguage}
         t={t}
+        onOpenOfflineModal={() => setOfflineModalOpen(true)}
+        isOfflineReady={isOfflineReady}
       />
 
       {/* Building / Facility Popup */}
@@ -790,6 +810,15 @@ export default function App() {
         recordedTrack={recordedTrack}
         onExportTrack={handleExportTrack}
         t={t}
+      />
+
+      {/* Offline Management Modal (Google Drive/Docs style) */}
+      <OfflineModal
+        isOpen={offlineModalOpen}
+        onClose={() => {
+          setOfflineModalOpen(false);
+          checkOfflineStatus().then((res) => setIsOfflineReady(res.isReady));
+        }}
       />
 
       {/* Initial Map Loading Splash */}
