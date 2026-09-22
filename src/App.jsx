@@ -480,19 +480,14 @@ export default function App() {
   // Zoom to feature
   const handleZoomToFeature = (lng, lat) => {
     const map = mapInstanceRef.current;
-    if (map) {
-      map.flyTo({
-        center: [105.845388, 21.005007],
-        zoom: 16,
-        essential: true
-      });
+    if (map && isFinite(lng) && isFinite(lat)) {
       setSearchModalOpen(false);
-      map.once('idle', () => {
-        map.flyTo({
-          center: [lng, lat],
-          zoom: 19,
-          essential: true
-        });
+      setPopupOpen(false);
+      map.flyTo({
+        center: [lng, lat],
+        zoom: 18.5,
+        pitch: 45,
+        essential: true
       });
     }
   };
