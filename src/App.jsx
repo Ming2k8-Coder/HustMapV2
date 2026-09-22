@@ -140,6 +140,11 @@ export default function App() {
         [105.835, 20.995],
         [105.853, 21.012]
       ],
+      pitch: 0,
+      bearing: 0,
+      pitchWithRotate: false, // Mặc định 2D: không cho vô tình kéo nghiêng
+      dragRotate: false,      // Mặc định 2D: khóa xoay chuột phải/Ctrl
+      touchPitch: false,     // Mặc định 2D: khóa vuốt 2 ngón chỉnh pitch
       attributionControl: false,
       transformRequest: (url) => {
         if (url.startsWith('/')) {
@@ -540,14 +545,28 @@ export default function App() {
     }
 
     if (next3D) {
-      // Chuyển sang 3D: Nghiêng góc camera 60 độ, xoay nhẹ góc nhìn phối cảnh
+      // Chuyển sang 3D: Mở khóa các cử chỉ chỉnh Pitch & Xoay góc
+      map.dragRotate.enable();
+      map.touchPitch.enable();
+      if (map.touchZoomRotate) {
+        map.touchZoomRotate.enableRotation();
+      }
+
+      // Nghiêng góc camera 60 độ, xoay nhẹ góc nhìn phối cảnh không gian
       map.easeTo({
         pitch: 60,
         bearing: -20,
         duration: 1000
       });
     } else {
-      // Chuyển về 2D: Nhìn thẳng đứng từ trên xuống, quay về hướng Bắc 0 độ
+      // Chuyển về 2D: Khóa hoàn toàn cử chỉ Pitch & Xoay (chỉ cho phép Pan & Zoom phẳng)
+      map.dragRotate.disable();
+      map.touchPitch.disable();
+      if (map.touchZoomRotate) {
+        map.touchZoomRotate.disableRotation();
+      }
+
+      // Nhìn thẳng đứng từ trên xuống (pitch: 0), quay về hướng Bắc (bearing: 0)
       map.easeTo({
         pitch: 0,
         bearing: 0,
@@ -565,7 +584,7 @@ export default function App() {
       map.flyTo({
         center: [lng, lat],
         zoom: 18.5,
-        pitch: 45,
+        pitch: is3DMode ? 55 : 0,
         essential: true
       });
     }
