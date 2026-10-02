@@ -256,7 +256,15 @@ export default function App() {
 
     map.on('load', () => {
       setLoading(false);
+    });
 
+    map.on('error', (e) => {
+      console.warn('[HustMap] Map event error:', e?.error?.message || e);
+      // Ensure loading spinner is dismissed even if non-fatal style errors happen
+      setLoading(false);
+    });
+
+    map.on('load', () => {
       // Add route GeoJSON source and polyline layers
       if (!map.getSource('route-source')) {
         map.addSource('route-source', {

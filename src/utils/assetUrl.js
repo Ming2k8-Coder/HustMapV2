@@ -27,7 +27,10 @@ export function getAbsoluteAssetUrl(path) {
     return relative;
   }
   if (typeof window !== 'undefined') {
-    return new URL(relative, window.location.origin).href;
+    const origin = window.location.origin.replace(/\/$/, '');
+    const cleanRelative = relative.startsWith('/') ? relative : `/${relative}`;
+    // Construct directly without `new URL()` to preserve literal tokens like {fontstack} and {range}
+    return `${origin}${cleanRelative}`;
   }
   return relative;
 }
