@@ -60,9 +60,9 @@ export default function App() {
   const [offlineModalOpen, setOfflineModalOpen] = useState(false);
   const [isOfflineReady, setIsOfflineReady] = useState(false);
 
-  // Register Service Worker & check offline status
+  // Register Service Worker & check offline status (only in production to avoid dev server HMR conflicts)
   useEffect(() => {
-    if ('serviceWorker' in navigator) {
+    if ('serviceWorker' in navigator && !import.meta.env.DEV) {
       const base = import.meta.env.BASE_URL || '/';
       navigator.serviceWorker.register(getAssetUrl('/sw.js'), { scope: base })
         .then(() => console.log('[HustMap] Service Worker registered successfully.'))

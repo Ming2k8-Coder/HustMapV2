@@ -102,6 +102,20 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
+  // Bypass Vite dev server internal assets, HMR websocket, and node_modules (prevents double-instance React hook crashes during development)
+  if (
+    url.pathname.startsWith('/@') ||
+    url.pathname.startsWith('/node_modules/') ||
+    url.pathname.includes('/@vite/') ||
+    url.pathname.includes('/@fs/') ||
+    url.pathname.includes('?v=') ||
+    url.pathname.includes('?token=') ||
+    url.pathname.endsWith('.jsx') ||
+    url.pathname.endsWith('.tsx')
+  ) {
+    return;
+  }
+
   const isMapAsset = (
     url.pathname.includes('/tiles/') ||
     url.pathname.includes('/fonts/') ||

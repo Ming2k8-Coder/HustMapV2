@@ -4,9 +4,15 @@ import react from '@vitejs/plugin-react';
 export default defineConfig({
   base: process.env.BASE_URL || '/',
   plugins: [react()],
+  resolve: {
+    dedupe: ['react', 'react-dom']
+  },
   server: {
     port: 3000,
-    open: false
+    open: false,
+    hmr: {
+      clientPort: 3000
+    }
   },
   build: {
     chunkSizeWarningLimit: 1200,
