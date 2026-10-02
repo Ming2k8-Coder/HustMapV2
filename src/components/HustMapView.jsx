@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { getMapLibre } from '../utils/maplibreLoader.js';
-import { getAssetUrl } from '../utils/assetUrl';
+import { getAssetUrl, getAbsoluteAssetUrl } from '../utils/assetUrl';
 
 const HUST_CENTER = [105.8431793, 21.006275];
 const BOUNDS = [
@@ -35,6 +35,17 @@ export default function HustMapView({
       maxZoom: 20,
       maxBounds: BOUNDS,
       attributionControl: false,
+      transformStyle: (previousStyle, nextStyle) => {
+        if (!nextStyle) return nextStyle;
+        const modified = { ...nextStyle };
+        if (modified.sprite && typeof modified.sprite === 'string') {
+          modified.sprite = getAbsoluteAssetUrl(modified.sprite);
+        }
+        if (modified.glyphs && typeof modified.glyphs === 'string') {
+          modified.glyphs = getAbsoluteAssetUrl(modified.glyphs);
+        }
+        return modified;
+      },
       transformRequest: (url) => {
         if (url.startsWith('/')) {
           const base = import.meta.env.BASE_URL || '/';
@@ -53,6 +64,16 @@ export default function HustMapView({
       new maplibregl.NavigationControl({ showCompass: true, showZoom: true }),
       'top-right'
     );
+
+    if (typeof map.setMissingStyleImageResolver === 'function') {
+      map.setMissingStyleImageResolver(() => {
+        return {
+          width: 1,
+          height: 1,
+          data: new Uint8Array(4)
+        };
+      });
+    }
 
     mapRef.current = map;
 

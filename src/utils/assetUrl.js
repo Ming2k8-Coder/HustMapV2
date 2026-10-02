@@ -16,3 +16,19 @@ export function getAssetUrl(path) {
   const cleanPath = path.startsWith('/') ? path.slice(1) : path;
   return `${cleanBase}${cleanPath}`;
 }
+
+/**
+ * Returns a fully qualified absolute URL with origin (e.g. http://localhost:3000/style/sprite/sprite)
+ * Required by MapLibre GL v5+ for sprite and glyphs specification.
+ */
+export function getAbsoluteAssetUrl(path) {
+  const relative = getAssetUrl(path);
+  if (/^(https?:|\/\/)/i.test(relative)) {
+    return relative;
+  }
+  if (typeof window !== 'undefined') {
+    return new URL(relative, window.location.origin).href;
+  }
+  return relative;
+}
+

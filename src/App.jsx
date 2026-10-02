@@ -12,7 +12,7 @@ import OfflineModal from './components/OfflineModal';
 import GuideModal from './components/GuideModal';
 import NerdOverlay from './components/NerdOverlay';
 import { checkOfflineStatus } from './services/offlineManager';
-import { getAssetUrl } from './utils/assetUrl';
+import { getAssetUrl, getAbsoluteAssetUrl } from './utils/assetUrl';
 
 const API_BASE = '/api/v1';
 
@@ -138,7 +138,22 @@ export default function App() {
   const changeLanguage = (newLang) => {
     setLang(newLang);
     if (mapInstanceRef.current) {
-      mapInstanceRef.current.setStyle(getAssetUrl(newLang === 'en' ? '/api_style_en.json' : '/api_style_vi.json'));
+      mapInstanceRef.current.setStyle(
+        getAssetUrl(newLang === 'en' ? '/api_style_en.json' : '/api_style_vi.json'),
+        {
+          transformStyle: (previousStyle, nextStyle) => {
+            if (!nextStyle) return nextStyle;
+            const modified = { ...nextStyle };
+            if (modified.sprite && typeof modified.sprite === 'string') {
+              modified.sprite = getAbsoluteAssetUrl(modified.sprite);
+            }
+            if (modified.glyphs && typeof modified.glyphs === 'string') {
+              modified.glyphs = getAbsoluteAssetUrl(modified.glyphs);
+            }
+            return modified;
+          }
+        }
+      );
     }
   };
 
@@ -171,6 +186,17 @@ export default function App() {
       dragRotate: false,      // Mặc định 2D: khóa xoay chuột phải/Ctrl
       touchPitch: false,     // Mặc định 2D: khóa vuốt 2 ngón chỉnh pitch
       attributionControl: false,
+      transformStyle: (previousStyle, nextStyle) => {
+        if (!nextStyle) return nextStyle;
+        const modified = { ...nextStyle };
+        if (modified.sprite && typeof modified.sprite === 'string') {
+          modified.sprite = getAbsoluteAssetUrl(modified.sprite);
+        }
+        if (modified.glyphs && typeof modified.glyphs === 'string') {
+          modified.glyphs = getAbsoluteAssetUrl(modified.glyphs);
+        }
+        return modified;
+      },
       transformRequest: (url) => {
         if (url.startsWith('/')) {
           const base = import.meta.env.BASE_URL || '/';
@@ -184,6 +210,17 @@ export default function App() {
         return { url };
       }
     });
+
+    // Provide placeholder for any sprite icon that could not be resolved from sprite sheet
+    if (typeof map.setMissingStyleImageResolver === 'function') {
+      map.setMissingStyleImageResolver(() => {
+        return {
+          width: 1,
+          height: 1,
+          data: new Uint8Array(4) // Transparent 1x1 RGBA pixel
+        };
+      });
+    }
 
     mapInstanceRef.current = map;
 
