@@ -135,25 +135,23 @@ export default function App() {
   }, []);
 
   // Switch language
-  const changeLanguage = (newLang) => {
+  const changeLanguage = async (newLang) => {
     setLang(newLang);
     if (mapInstanceRef.current) {
-      mapInstanceRef.current.setStyle(
-        getAssetUrl(newLang === 'en' ? '/api_style_en.json' : '/api_style_vi.json'),
-        {
-          transformStyle: (previousStyle, nextStyle) => {
-            if (!nextStyle) return nextStyle;
-            const modified = { ...nextStyle };
-            if (modified.sprite && typeof modified.sprite === 'string') {
-              modified.sprite = getAbsoluteAssetUrl(modified.sprite);
-            }
-            if (modified.glyphs && typeof modified.glyphs === 'string') {
-              modified.glyphs = getAbsoluteAssetUrl(modified.glyphs);
-            }
-            return modified;
-          }
+      const url = getAssetUrl(newLang === 'en' ? '/api_style_en.json' : '/api_style_vi.json');
+      try {
+        const res = await fetch(url);
+        const styleObj = await res.json();
+        if (styleObj.sprite && typeof styleObj.sprite === 'string') {
+          styleObj.sprite = getAbsoluteAssetUrl(styleObj.sprite);
         }
-      );
+        if (styleObj.glyphs && typeof styleObj.glyphs === 'string') {
+          styleObj.glyphs = getAbsoluteAssetUrl(styleObj.glyphs);
+        }
+        mapInstanceRef.current.setStyle(styleObj);
+      } catch {
+        mapInstanceRef.current.setStyle(url);
+      }
     }
   };
 
@@ -164,15 +162,35 @@ export default function App() {
     let watchId;
     let isCancelled = false;
 
-    getMapLibre().then((maplibregl) => {
+    // Helper to load and resolve style JSON with absolute URLs for MapLibre v6
+    const loadPreparedStyle = async (targetLang) => {
+      const url = getAssetUrl(targetLang === 'en' ? '/api_style_en.json' : '/api_style_vi.json');
+      try {
+        const res = await fetch(url);
+        const styleObj = await res.json();
+        if (styleObj.sprite && typeof styleObj.sprite === 'string') {
+          styleObj.sprite = getAbsoluteAssetUrl(styleObj.sprite);
+        }
+        if (styleObj.glyphs && typeof styleObj.glyphs === 'string') {
+          styleObj.glyphs = getAbsoluteAssetUrl(styleObj.glyphs);
+        }
+        return styleObj;
+      } catch (err) {
+        console.warn('[HustMap] Fallback to raw style url', err);
+        return url;
+      }
+    };
+
+    getMapLibre().then(async (maplibregl) => {
       if (isCancelled || !mapContainerRef.current) return;
       maplibreglRef.current = maplibregl;
 
-      const styleUrl = getAssetUrl(lang === 'en' ? '/api_style_en.json' : '/api_style_vi.json');
+      const preparedStyle = await loadPreparedStyle(lang);
+      if (isCancelled || !mapContainerRef.current) return;
 
       const map = new maplibregl.Map({
       container: mapContainerRef.current,
-      style: styleUrl,
+      style: preparedStyle,
       center: [105.8431793, 21.006275],
       zoom: 17,
       minZoom: 16,
@@ -221,6 +239,18 @@ export default function App() {
         };
       });
     }
+
+    // Also listen to styleimagemissing event to dynamically supply empty icon if requested
+    map.on('styleimagemissing', (e) => {
+      const id = e.id;
+      if (!map.hasImage(id)) {
+        map.addImage(id, {
+          width: 1,
+          height: 1,
+          data: new Uint8Array(4)
+        });
+      }
+    });
 
     mapInstanceRef.current = map;
 
