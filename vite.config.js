@@ -13,7 +13,6 @@ export default defineConfig({
     rollupOptions: {
       output: {
         manualChunks: {
-          'maplibre-vendor': ['maplibre-gl'],
           'react-vendor': ['react', 'react-dom']
         }
       }
@@ -22,6 +21,7 @@ export default defineConfig({
   test: {
     globals: true,
     environment: 'jsdom',
+    pool: 'threads',
     setupFiles: './src/test/setup.js',
     coverage: {
       provider: 'v8',

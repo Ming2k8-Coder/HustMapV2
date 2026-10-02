@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import maplibregl from 'maplibre-gl';
+import { getMapLibre } from '../utils/maplibreLoader.js';
 import { getAssetUrl } from '../utils/assetUrl';
 
 const HUST_CENTER = [105.8431793, 21.006275];
@@ -16,12 +16,17 @@ export default function HustMapView({
   mapRef
 }) {
   const containerRef = useRef(null);
-  const activeMarkerRef = useRef(null);
 
   useEffect(() => {
     if (!containerRef.current) return;
 
-    const map = new maplibregl.Map({
+    let map = null;
+    let isMounted = true;
+
+    getMapLibre().then((maplibregl) => {
+      if (!isMounted || !containerRef.current) return;
+
+      map = new maplibregl.Map({
       container: containerRef.current,
       style: getAssetUrl('/style.json'),
       center: HUST_CENTER,
@@ -200,17 +205,21 @@ export default function HustMapView({
         }
       });
 
-      // Cursor change on hover
-      map.on('mouseenter', 'poi-glow', () => {
-        map.getCanvas().style.cursor = 'pointer';
-      });
-      map.on('mouseleave', 'poi-glow', () => {
-        map.getCanvas().style.cursor = '';
+        // Cursor change on hover
+        map.on('mouseenter', 'poi-glow', () => {
+          map.getCanvas().style.cursor = 'pointer';
+        });
+        map.on('mouseleave', 'poi-glow', () => {
+          map.getCanvas().style.cursor = '';
+        });
       });
     });
 
     return () => {
-      map.remove();
+      isMounted = false;
+      if (map) {
+        map.remove();
+      }
     };
   }, [buildings, parkings]);
 

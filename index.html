@@ -13,6 +13,13 @@
     <!-- Original HustMap Stylesheet & Fonts -->
     <link rel="stylesheet" href="%BASE_URL%hustmap_font.css" />
     <link rel="stylesheet" href="%BASE_URL%hustmap_original.css" />
+    <!-- MapLibre GL CSS: Free CDN with Local Offline Fallback -->
+    <link
+      id="maplibre-css"
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/maplibre-gl@6.11.2/dist/maplibre-gl.css"
+      onerror="this.onerror=null;this.href='%BASE_URL%vendor/maplibre-gl/maplibre-gl.css';"
+    />
   </head>
   <body class="overflow-hidden m-0 p-0 select-none bg-white">
     <div id="root"></div>

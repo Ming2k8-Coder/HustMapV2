@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import maplibregl from 'maplibre-gl';
+import { getMapLibre } from './utils/maplibreLoader';
 import { CampusRouter } from './router';
 import { translations } from './constants/translations';
 import { NavigationBar } from './components/NavigationBar';
@@ -101,6 +101,7 @@ export default function App() {
 
   const mapContainerRef = useRef(null);
   const mapInstanceRef = useRef(null);
+  const maplibreglRef = useRef(null);
   const userMarkerRef = useRef(null);
   const userLocationRef = useRef(null);
   const routerRef = useRef(null);
@@ -146,9 +147,15 @@ export default function App() {
     if (!mapContainerRef.current) return;
 
     let watchId;
-    const styleUrl = getAssetUrl(lang === 'en' ? '/api_style_en.json' : '/api_style_vi.json');
+    let isCancelled = false;
 
-    const map = new maplibregl.Map({
+    getMapLibre().then((maplibregl) => {
+      if (isCancelled || !mapContainerRef.current) return;
+      maplibreglRef.current = maplibregl;
+
+      const styleUrl = getAssetUrl(lang === 'en' ? '/api_style_en.json' : '/api_style_vi.json');
+
+      const map = new maplibregl.Map({
       container: mapContainerRef.current,
       style: styleUrl,
       center: [105.8431793, 21.006275],
@@ -404,8 +411,10 @@ export default function App() {
         { enableHighAccuracy: true }
       );
     }
+    });
 
     return () => {
+      isCancelled = true;
       if (mapInstanceRef.current) {
         mapInstanceRef.current.remove();
         mapInstanceRef.current = null;
@@ -489,11 +498,14 @@ export default function App() {
           }
         });
 
+        const ml = maplibreglRef.current;
+        if (!ml) return;
+
         // Add/update Start marker (Green)
         if (startMarkerRef.current) {
           startMarkerRef.current.setLngLat(startCoord);
         } else {
-          startMarkerRef.current = new maplibregl.Marker({ color: '#10B981' })
+          startMarkerRef.current = new ml.Marker({ color: '#10B981' })
             .setLngLat(startCoord)
             .addTo(map);
         }
@@ -502,13 +514,13 @@ export default function App() {
         if (endMarkerRef.current) {
           endMarkerRef.current.setLngLat(endCoord);
         } else {
-          endMarkerRef.current = new maplibregl.Marker({ color: '#EF4444' })
+          endMarkerRef.current = new ml.Marker({ color: '#EF4444' })
             .setLngLat(endCoord)
             .addTo(map);
         }
 
         // Fit map bounds to show whole route
-        const bounds = new maplibregl.LngLatBounds();
+        const bounds = new ml.LngLatBounds();
         res.path.forEach((pt) => bounds.extend(pt));
         map.fitBounds(bounds, { padding: 80, duration: 1000 });
       }
@@ -582,10 +594,11 @@ export default function App() {
           coords: [coords[0], coords[1]]
         }));
 
+        const ml = maplibreglRef.current;
         if (poiMarkerRef.current) {
           poiMarkerRef.current.setLngLat([coords[0], coords[1]]);
-        } else {
-          poiMarkerRef.current = new maplibregl.Marker({ color: '#701818' })
+        } else if (ml) {
+          poiMarkerRef.current = new ml.Marker({ color: '#701818' })
             .setLngLat([coords[0], coords[1]])
             .addTo(map);
         }

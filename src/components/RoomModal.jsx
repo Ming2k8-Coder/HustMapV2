@@ -21,16 +21,35 @@ export function RoomModal({ open, result, buildingName, t }) {
                 <>
                   <div className="left-col flex flex-col text-left flex-1">
                     {room.name_small && (
-                      <div className="name-small font-light mb-[5px] text-[8px] sm:text-[11px]">
+                      <div className="name-small font-light mb-[5px] text-[8px] sm:text-[11px] text-slate-500">
                         {room.name_small}
                       </div>
                     )}
-                    <div className="name-big font-medium text-[10px] sm:text-[14px]">
+                    <div className="name-big font-medium text-[10px] sm:text-[14px] text-slate-900">
                       {room.name_big}
                     </div>
+                    {(room.floor_num || room.capacity || room.facilities) && (
+                      <div className="flex flex-wrap items-center gap-1.5 mt-1">
+                        {room.floor_num && (
+                          <span className="inline-block bg-red-100 text-red-800 text-[10px] sm:text-[11px] font-bold px-1.5 py-0.5 rounded">
+                            {t('Tầng')} {room.floor_num}
+                          </span>
+                        )}
+                        {room.capacity && (
+                          <span className="inline-block bg-slate-100 text-slate-700 text-[10px] sm:text-[11px] px-1.5 py-0.5 rounded">
+                            {t('Sức chứa') || 'Sức chứa'}: {room.capacity}
+                          </span>
+                        )}
+                        {room.facilities && (
+                          <span className="inline-block bg-blue-50 text-blue-700 text-[10px] sm:text-[11px] px-1.5 py-0.5 rounded">
+                            {room.facilities}
+                          </span>
+                        )}
+                      </div>
+                    )}
                   </div>
                   <div className="right-col flex flex-col text-right">
-                    <div className="room-code text-[12px] sm:text-[14px] font-semibold">
+                    <div className="room-code text-[12px] sm:text-[14px] font-semibold text-red-700">
                       {room.room_code}
                     </div>
                     {(room.phone_num || room.website || room.email) && (
@@ -57,12 +76,12 @@ export function RoomModal({ open, result, buildingName, t }) {
               )}
             </div>
           ))}
-          <div className="Building-name px-[20px] text-[15px] sm:text-[25px] font-semibold flex items-center justify-center m-[5px] sm:mb-[10px]">
+          <div className="Building-name px-[20px] text-[15px] sm:text-[20px] font-semibold flex items-center justify-center m-[5px] sm:mb-[10px] text-slate-400">
             {t('Hết')}
           </div>
         </div>
       ) : (
-        <div className="text-white text-center">{t('Lỗi khi tải kết quả.')}</div>
+        <div className="text-red-700 text-center py-4 font-medium">{t('Lỗi khi tải kết quả.')}</div>
       )}
     </div>
   );
